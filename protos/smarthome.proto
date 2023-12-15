@@ -1,6 +1,6 @@
-syntax = "proto3"
+syntax = "proto3";
 
-package calc;
+package smarthome;
 
 service ThermostatService {
     rpc setTemp(SetTempRequest) returns (SetTempResponse) {} // Unary gRPC service to set target temperature

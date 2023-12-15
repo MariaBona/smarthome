@@ -1,0 +1,15 @@
+{
+  "name": "smarthome",
+  "version": "1.0.0",
+  "description": "Smart Home system using gRPC",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@grpc/grpc-js": "^1.9.13",
+    "@grpc/proto-loader": "^0.7.10"
+  }
+}
