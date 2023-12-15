@@ -1,5 +1,5 @@
 {
-  "name": "smarthome",
+  "name": "smarthome_server",
   "version": "1.0.0",
   "description": "Smart Home system using gRPC",
   "main": "app.js",
