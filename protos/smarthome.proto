@@ -1,0 +1,37 @@
+syntax = "proto3"
+
+package calc;
+
+service ThermostatService {
+    rpc setTemp(SetTempRequest) returns (SetTempResponse) {} // Unary gRPC service to set target temperature
+    rpc getTemp(GetTempRequest) returns (stream GetTempResponse) {} // Get temperature stream request
+}
+
+service SwitchService {
+
+}
+
+service LightService {
+
+}
+
+message SetTempRequest {
+    double temperature = 1;
+    uint32 duration = 2;
+}
+
+message SetTempResponse {
+    double set_temperature = 1;
+    double current_temperature = 2;
+    bool requesting_heat = 3;
+}
+
+message GetTempRequest {
+}
+
+message GetTempResponse {
+    double target_temperature = 1;
+    double current_temperature = 2;
+    bool requesting_heat = 3;
+    uint32 time_left = 4;
+}
