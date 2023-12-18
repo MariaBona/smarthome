@@ -20,15 +20,15 @@ message RegisterDeviceRequest {
 }
 
 message RegisterDeviceResponse {
-    string new_name = 1; // New name to distinguish between different devices of the same type
+    string newName = 1; // New name to distinguish between different devices of the same type
     uint32 id = 2; // individual id of the client device in the smarthome
 }
 
 // Stream device status
 message DeviceStatusRequest {
-    uint32 device_id = 1;
-    string device_name = 2;
-    DeviceType device_type = 3;
+    uint32 deviceId = 1;
+    string deviceName = 2;
+    DeviceType deviceType = 3;
     optional GetTempResponse thermostat = 4; // this will be populated if device_type is DEVICE_THERMOSTAT
 }
 
@@ -50,9 +50,9 @@ message SetTempRequest {
 
 // Response to SetTempRequest
 message SetTempResponse {
-    double set_temperature = 1;
-    double current_temperature = 2;
-    bool requesting_heat = 3;
+    double setTemperature = 1;
+    double currentTemperature = 2;
+    bool requestingHeat = 3;
 }
 
 // Request temperature updates from thermostat
@@ -61,8 +61,8 @@ message GetTempRequest {
 
 // Response to GetTempRequest
 message GetTempResponse {
-    double target_temperature = 1; // Target temperature for the thermostat
-    double current_temperature = 2; // Current room temperature
-    bool requesting_heat = 3; // If the thermostat is requesting heat
-    uint32 time_left = 4; // Time left on the target temperature, after that it will return to default setting on the termostat
+    double targetTemperature = 1; // Target temperature for the thermostat
+    double currentTemperature = 2; // Current room temperature
+    bool requestingHeat = 3; // If the thermostat is requesting heat
+    uint32 timeLeft = 4; // Time left on the target temperature, after that it will return to default setting on the termostat
 }
