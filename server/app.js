@@ -5,20 +5,27 @@ var packageDefinition = protoLoader.loadSync(PROTO_PATH, {enums: String})
 var smarthome_proto = grpc.loadPackageDefinition(packageDefinition).smarthome
 
 // device dictionary
-const devices = new Array()
+const devices = new Map()
+let currentId = 0
+function nextId() {
+    return currentId++;
+}
 
 function registerDevice(call, callback) {
     try {
         var name = call.request.name.toString()
         var type = call.request.device.toString()
+        var id = nextId()
         var newDevice = {
-            name: name+devices.length,
-            id: devices.length
+            name: name+id,
+            id: id,
+            type: type,
+            status: {}
         }
         console.log("Got a new device: " + newDevice.name + ", type: " + type + ", id:" + newDevice.id)
         // add new device to list of connected devices
-        devices.push(newDevice)
-        callback(null,  {
+        devices.set(newDevice.id, newDevice)
+        callback(null, {
             newName: newDevice.name,
             id: newDevice.id,
         })

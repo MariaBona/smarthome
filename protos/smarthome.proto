@@ -29,7 +29,7 @@ message DeviceStatusRequest {
     uint32 deviceId = 1;
     string deviceName = 2;
     DeviceType deviceType = 3;
-    optional GetTempResponse thermostat = 4; // this will be populated if device_type is DEVICE_THERMOSTAT
+    map<string,string> status = 4; // this will have a device specific device values and properties
 }
 
 message DeviceStatusResponse {
@@ -39,7 +39,7 @@ message DeviceStatusResponse {
 // Thermostat device/service
 service ThermostatService {
     rpc setTemp(SetTempRequest) returns (SetTempResponse) {} // Unary gRPC service to set target temperature
-    rpc getTemp(GetTempRequest) returns (stream GetTempResponse) {} // Server side streaming get temperature stream request
+    rpc getTemp(GetTempRequest) returns (stream GetTempResponse) {} // Client side streaming get temperature stream request
 }
 
 // Main Controller can request target temperature on a thermostat device
