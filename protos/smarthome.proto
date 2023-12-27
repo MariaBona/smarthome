@@ -33,7 +33,7 @@ message DeviceStatusRequest {
 }
 
 message DeviceStatusResponse {
-
+    map<string,string> commands = 1; // commands from the controller relayed to the client
 }
 
 // Thermostat device/service

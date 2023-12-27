@@ -36,12 +36,46 @@ function registerDevice(call, callback) {
     }
 }
 
+function deviceStatus(call, callback) {
+    call.on('data', async function(request) {
+        console.log(request)
+        try {
+            var id = parseInt(request.deviceId)
+            if(!isNaN(id)) {
+                var device = devices[id]
+                console.log("device: " + device)
+                if(device["name"] == request.deviceName) {
+                    console.log(request.status)
+                    device.status = request.status
+                } else {
+                    console.log("deviceName don't match")
+                }
+            } else {
+                console.log("deviceStatus needs a valid deviceId")
+            }
+        } catch(e) {
+            console.log( "An error occured when parsing deviceStatus")
+        }
+    });
+
+    call.on("end", function() {
+        console.log("Client closed the connection")
+    });
+
+    call.on("error", function(e) {
+        console.log(e)
+    });
+}
+
 function setTemp(call, callback) {
 
 }
 
 var server = new grpc.Server()
-server.addService(smarthome_proto.RegistryService.service, { registerDevice: registerDevice })
+server.addService(smarthome_proto.RegistryService.service, {
+    registerDevice: registerDevice,
+    deviceStatus: deviceStatus,
+ })
 server.addService(smarthome_proto.ThermostatService.service, { setTemp: setTemp })
 server.bindAsync("0.0.0.0:40000", grpc.ServerCredentials.createInsecure(), function() {
     server.start()
