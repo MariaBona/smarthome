@@ -6,6 +6,8 @@ var smarthome_proto = grpc.loadPackageDefinition(packageDefinition).smarthome
 
 // device dictionary
 const devices = new Map()
+// calls mapped to a device
+const status_calls = new Map()
 let currentId = 0
 function nextId() {
     return currentId++;
@@ -20,7 +22,8 @@ function registerDevice(call, callback) {
             name: name+id,
             id: id,
             type: type,
-            status: {}
+            status: {},
+            status_call: null
         }
         console.log("Got a new device: " + newDevice.name + ", type: " + type + ", id:" + newDevice.id)
         // add new device to list of connected devices
@@ -36,19 +39,23 @@ function registerDevice(call, callback) {
     }
 }
 
-function deviceStatus(call, callback) {
-    call.on('data', async function(request) {
+function deviceStatus(call) {
+    var id
+    call.on('data', function(request) {
         console.log(request)
         try {
-            var id = parseInt(request.deviceId)
+            id = parseInt(request.deviceId)
             if(!isNaN(id)) {
-                var device = devices[id]
+                var device = devices.get(id)
                 console.log("device: " + device)
-                if(device["name"] == request.deviceName) {
+                console.log(device.name)
+                console.log(device["name"])
+                status_calls.set(call, id)
+                if(device.name == request.deviceName) {
                     console.log(request.status)
                     device.status = request.status
                 } else {
-                    console.log("deviceName don't match")
+                    console.log("device names don't match")
                 }
             } else {
                 console.log("deviceStatus needs a valid deviceId")
@@ -59,7 +66,11 @@ function deviceStatus(call, callback) {
     });
 
     call.on("end", function() {
-        console.log("Client closed the connection")
+        id = status_calls.get(call)
+        devices.delete(id)
+        status_calls.delete(id)
+        console.log("Client " + id + " closed the connection")
+        call.end()
     });
 
     call.on("error", function(e) {
