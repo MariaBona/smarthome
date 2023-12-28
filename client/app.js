@@ -1,3 +1,4 @@
+var readline = require('readline')
 var readlineSync = require('readline-sync')
 var grpc = require("@grpc/grpc-js")
 var protoLoader = require("@grpc/proto-loader")
@@ -33,7 +34,7 @@ client.registerDevice({name: name, device: "DEVICE_THERMOSTAT"}, function(error,
 
             status_call.on("data", function(response) {
                 console.log(response)
-            })
+            });
 
             // update status of requestingHeat
             requestingHeat = currentTemp < targetTemp;
@@ -48,46 +49,47 @@ client.registerDevice({name: name, device: "DEVICE_THERMOSTAT"}, function(error,
                 }
             })
 
-            // Start updating the server with values set by user from command line
-            var user_input
-            var i = 0;
-            (async () => {
-                do {
-                    i++;
-                    user_input = readlineSync.question("What is the target temperature( q to Quit ): ")
-                    try {
-                        if (user_input.toLowerCase() === "q") {
-                            break;
-                        }
-                        targetTemp = parseFloat(user_input)
-                        if (isNaN(targetTemp)) {
-                            console.log("Temperature must be a number")
-                            continue
-                        } else {
-                            // update status of requestingHeat
-                            requestingHeat = currentTemp < targetTemp;
-                            status_call.write({
-                                deviceId: id,
-                                deviceName: name,
-                                deviceType: "DEVICE_THERMOSTAT",
-                                status: {
-                                    currentTemp: currentTemp,
-                                    targetTemp: targetTemp,
-                                    requestingHeat: currentTemp < targetTemp,
-                                }
-                            })
-                            await new Promise(done => setTimeout(() => done(), 100));
-                        }
-                    } catch(e) {
-                        console.log("Error occured" + e)
-                    }
-                } while(user_input != "q");
+            // TODO: create a config call to accept remote temperature settings
 
-                status_call.end();
-            })();
+            console.log("What is the target temperature(q to Quit):")
+            var rl = readline.createInterface({
+                input: process.stdin,
+                output: process.stdout
+            });
+
+            // update thermostat status on entry from from the user
+            rl.on("line", function(message) {
+                if (message.toLowerCase() === "q") {
+                    status_call.end();
+                    rl.close();
+                    return;
+                }
+                // Get user requested temperature
+                targetTemp = parseFloat(message)
+                if (isNaN(targetTemp)) {
+                    console.log("Temperature must be a number")
+                    return
+                } else {
+                    // update the status of requestingHeat
+                    requestingHeat = currentTemp < targetTemp;
+                    console.log("Current temp: " + currentTemp + ", set temp: " + targetTemp +
+                        ", heating: " + requestingHeat)
+                    //console.log("What is the target temperature(q to Quit):")
+                    status_call.write({
+                        deviceId: id,
+                        deviceName: name,
+                        deviceType: "DEVICE_THERMOSTAT",
+                        status: {
+                            currentTemp: currentTemp,
+                            targetTemp: targetTemp,
+                            requestingHeat: currentTemp < targetTemp,
+                        }
+                    })
+                }
+            })
         }
     } catch(e) {
-        console.log("Could not connect to server")
+        console.log("Could not connect to server " + e)
     }
 });
 

@@ -47,9 +47,6 @@ function deviceStatus(call) {
             id = parseInt(request.deviceId)
             if(!isNaN(id)) {
                 var device = devices.get(id)
-                console.log("device: " + device)
-                console.log(device.name)
-                console.log(device["name"])
                 status_calls.set(call, id)
                 if(device.name == request.deviceName) {
                     console.log(request.status)
