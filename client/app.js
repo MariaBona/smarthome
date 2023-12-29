@@ -11,13 +11,13 @@ var client = new smarthome_proto.RegistryService("0.0.0.0:40000", grpc.credentia
 
 var name = "Thermostat";
 var id = -1;
-var currentTemp = 21.5;
-var targetTemp = 19;
-var requestingHeat = false;
+var current_temp = 21.5;
+var target_temp = 19;
+var requesting_heat = false;
 var status_call
 
 // calling registerDevice RPC function to get my device ID from the server
-client.registerDevice({name: name, device: "DEVICE_THERMOSTAT"}, function(error, response) {
+client.registerDevice({name: name, type: "DEVICE_THERMOSTAT"}, function(error, response) {
     try {
         console.log(error, response)
         if (response.message) {
@@ -32,24 +32,23 @@ client.registerDevice({name: name, device: "DEVICE_THERMOSTAT"}, function(error,
                 console.log("Error occured: " + e)
             });
 
-            status_call.on("data", function(response) {
-                console.log(response)
+            status_call.on("data", function(commands) {
+                console.log(commands)
+
             });
 
-            // update status of requestingHeat
-            requestingHeat = currentTemp < targetTemp;
+            // update status of requesting_heat
+            requesting_heat = current_temp < target_temp;
             status_call.write({
-                deviceId: id,
-                deviceName: name,
-                deviceType: "DEVICE_THERMOSTAT",
+                id: id,
+                name: name,
+                type: "DEVICE_THERMOSTAT",
                 status: {
-                    currentTemp: currentTemp,
-                    targetTemp: targetTemp,
-                    requestingHeat: requestingHeat,
+                    current_temp: current_temp,
+                    target_temp: target_temp,
+                    requesting_heat: requesting_heat,
                 }
             })
-
-            // TODO: create a config call to accept remote temperature settings
 
             console.log("What is the target temperature(q to Quit):")
             var rl = readline.createInterface({
@@ -65,24 +64,24 @@ client.registerDevice({name: name, device: "DEVICE_THERMOSTAT"}, function(error,
                     return;
                 }
                 // Get user requested temperature
-                targetTemp = parseFloat(message)
-                if (isNaN(targetTemp)) {
+                target_temp = parseFloat(message)
+                if (isNaN(target_temp)) {
                     console.log("Temperature must be a number")
                     return
                 } else {
-                    // update the status of requestingHeat
-                    requestingHeat = currentTemp < targetTemp;
-                    console.log("Current temp: " + currentTemp + ", set temp: " + targetTemp +
-                        ", heating: " + requestingHeat)
+                    // update the status of requesting_heat
+                    requesting_heat = current_temp < target_temp;
+                    console.log("Current temp: " + current_temp + ", set temp: " + target_temp +
+                        ", heating: " + requesting_heat)
                     //console.log("What is the target temperature(q to Quit):")
                     status_call.write({
-                        deviceId: id,
-                        deviceName: name,
-                        deviceType: "DEVICE_THERMOSTAT",
+                        id: id,
+                        name: name,
+                        type: "DEVICE_THERMOSTAT",
                         status: {
-                            currentTemp: currentTemp,
-                            targetTemp: targetTemp,
-                            requestingHeat: currentTemp < targetTemp,
+                            current_temp: current_temp,
+                            target_temp: target_temp,
+                            requesting_heat: current_temp < target_temp,
                         }
                     })
                 }

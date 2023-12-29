@@ -16,7 +16,7 @@ enum DeviceType {
 
 message RegisterDeviceRequest {
     string name = 1; // Requested name set to a thermostat client
-    DeviceType device = 2; // what kind of device the client device is
+    DeviceType type = 2; // what kind of device the client device is
 }
 
 message RegisterDeviceResponse {
@@ -26,9 +26,9 @@ message RegisterDeviceResponse {
 
 // Stream device status
 message DeviceStatusRequest {
-    uint32 deviceId = 1;
-    string deviceName = 2;
-    DeviceType deviceType = 3;
+    uint32 id = 1;
+    string name = 2;
+    DeviceType type = 3;
     map<string,string> status = 4; // this will have a device specific device values and properties
 }
 
@@ -55,7 +55,6 @@ message SetTempResponse {
     bool requestingHeat = 3;
 }
 
-// Request temperature updates from thermostat
 message GetTempRequest {
 }
 

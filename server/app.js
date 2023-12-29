@@ -8,6 +8,8 @@ var smarthome_proto = grpc.loadPackageDefinition(packageDefinition).smarthome
 const devices = new Map()
 // calls mapped to a device
 const status_calls = new Map()
+// last commands from controller to devices by their id
+const commands = new Map()
 let currentId = 0
 function nextId() {
     return currentId++;
@@ -16,7 +18,7 @@ function nextId() {
 function registerDevice(call, callback) {
     try {
         var name = call.request.name.toString()
-        var type = call.request.device.toString()
+        var type = call.request.type.toString()
         var id = nextId()
         var newDevice = {
             name: name+id,
@@ -44,18 +46,18 @@ function deviceStatus(call) {
     call.on('data', function(request) {
         console.log(request)
         try {
-            id = parseInt(request.deviceId)
+            id = parseInt(request.id)
             if(!isNaN(id)) {
                 var device = devices.get(id)
                 status_calls.set(call, id)
-                if(device.name == request.deviceName) {
+                if(device.name == request.name) {
                     console.log(request.status)
                     device.status = request.status
                 } else {
                     console.log("device names don't match")
                 }
             } else {
-                console.log("deviceStatus needs a valid deviceId")
+                console.log("deviceStatus needs a valid id")
             }
         } catch(e) {
             console.log( "An error occured when parsing deviceStatus")
