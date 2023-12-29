@@ -2,10 +2,9 @@ syntax = "proto3";
 
 package smarthome;
 
-// Collects information about devices on the system
+// Collects information about devices connected to the the system
 service RegistryService {
     rpc registerDevice(RegisterDeviceRequest) returns (RegisterDeviceResponse) {} // Register a device in the system
-    rpc deviceStatus(stream DeviceStatusRequest) returns (stream DeviceStatusResponse) {} // Stream device status to the Main Controller
 }
 
 // Device enum is used to distinguish device types
@@ -24,44 +23,44 @@ message RegisterDeviceResponse {
     uint32 id = 2; // individual id of the client device in the smarthome
 }
 
+// Allows for device status updates and status subscriptions
+service StatusService {
+    rpc status(stream StatusRequest) returns (stream StatusResponse) {} // Stream device status to the Main Controller
+    rpc subscribe(SubscribeRequest) returns (stream SubscribeResponse) {} // Devices can subscribe to status of other devices on the system
+}
+
 // Stream device status
-message DeviceStatusRequest {
+message StatusRequest {
     uint32 id = 1;
     string name = 2;
     DeviceType type = 3;
     map<string,string> status = 4; // this will have a device specific device values and properties
 }
+// Stream device commands from controller
+message StatusResponse {
+    map<string,string> commands = 1; // pending commands from the controller relayed to the client
+}
 
-message DeviceStatusResponse {
-    map<string,string> commands = 1; // commands from the controller relayed to the client
+message SubscribeRequest {
+    uint32 id = 1; // id of the device we want to subscribe to its status updates
+}
+
+message SubscribeResponse {
+    uint32 id = 1;
+    map<string,string> status = 2;
 }
 
 // Thermostat device/service
 service ThermostatService {
     rpc setTemp(SetTempRequest) returns (SetTempResponse) {} // Unary gRPC service to set target temperature
-    rpc getTemp(GetTempRequest) returns (stream GetTempResponse) {} // Client side streaming get temperature stream request
 }
 
 // Main Controller can request target temperature on a thermostat device
 message SetTempRequest {
-    double temperature = 1;
-    uint32 duration = 2;
+    uint32 id = 1;
+    double temperature = 2;
 }
 
 // Response to SetTempRequest
 message SetTempResponse {
-    double setTemperature = 1;
-    double currentTemperature = 2;
-    bool requestingHeat = 3;
-}
-
-message GetTempRequest {
-}
-
-// Response to GetTempRequest
-message GetTempResponse {
-    double targetTemperature = 1; // Target temperature for the thermostat
-    double currentTemperature = 2; // Current room temperature
-    bool requestingHeat = 3; // If the thermostat is requesting heat
-    uint32 timeLeft = 4; // Time left on the target temperature, after that it will return to default setting on the termostat
 }

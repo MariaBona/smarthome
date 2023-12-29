@@ -10,6 +10,7 @@ var packageDefinition = protoLoader.loadSync(PROTO_PATH, {enums: String, keepCas
 var smarthome_proto = grpc.loadPackageDefinition(packageDefinition).smarthome
 
 var client = new smarthome_proto.RegistryService("0.0.0.0:40000", grpc.credentials.createInsecure());
+var sub = new smarthome_proto.StatusService("0.0.0.0:40000", grpc.credentials.createInsecure());
 
 var name = "Thermostat";
 var id = -1;
@@ -29,7 +30,7 @@ client.registerDevice({name: name, type: "DEVICE_THERMOSTAT"}, function(error, r
             console.log("My new name: " + response.new_name + ", id: " + response.id)
             name = response.new_name
             id = response.id
-            status_call = client.deviceStatus()
+            status_call = sub.status()
 
             status_call.on("error", function(e) {
                 console.log("Error occured: " + e);
@@ -64,7 +65,7 @@ client.registerDevice({name: name, type: "DEVICE_THERMOSTAT"}, function(error, r
 
             status_call.on("data", function(status_response) {
                 console.log(status_response);
-                temperature = parseFloat(status_response.target_temp);
+                temperature = parseFloat(status_response.temperature);
                 console.log("Target temperature from controller received:" + temperature);
                 if (!isNaN(temperature)) {
                     writeAndUpdateStatus(temperature);
@@ -100,10 +101,12 @@ client.registerDevice({name: name, type: "DEVICE_THERMOSTAT"}, function(error, r
             (async () => { // asif self calling async function not block the client with timeout
                 while(!quit) {
                     // calculate temperature change between -0.5 and 0.5 degrees
-                    change = -0.5 + Math.round(Math.random())
+                    change = -0.5 + Math.round(Math.random()*2) * 0.5
                     // update current_temp by the change value
-                    current_temp = current_temp + change;
-                    writeAndUpdateStatus(target_temp, false);
+                    if (change != 0) {
+                        current_temp = current_temp + change;
+                        writeAndUpdateStatus(target_temp, false);
+                    }
                     // wait 5 seconds
                     await new Promise(done => setTimeout(() => done(), 5000));
                 } 

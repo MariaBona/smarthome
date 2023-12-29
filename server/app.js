@@ -41,7 +41,7 @@ function registerDevice(call, callback) {
     }
 }
 
-function deviceStatus(call) {
+function status(call) {
     call.on('data', function(request) {
         console.log(request)
         try {
@@ -83,9 +83,13 @@ function setTemp(call, callback) {
 var server = new grpc.Server()
 server.addService(smarthome_proto.RegistryService.service, {
     registerDevice: registerDevice,
-    deviceStatus: deviceStatus,
- })
-server.addService(smarthome_proto.ThermostatService.service, { setTemp: setTemp })
+})
+server.addService(smarthome_proto.StatusService.service, {
+    status: status,
+})
+server.addService(smarthome_proto.ThermostatService.service, { 
+    setTemp: setTemp,
+})
 server.bindAsync("0.0.0.0:40000", grpc.ServerCredentials.createInsecure(), function() {
     server.start()
 })
