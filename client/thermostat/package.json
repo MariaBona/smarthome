@@ -1,5 +1,5 @@
 {
-  "name": "client",
+  "name": "thermostat_client",
   "version": "1.0.0",
   "description": "smarthome client",
   "main": "app.js",

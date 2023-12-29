@@ -1,7 +1,7 @@
 var grpc = require("@grpc/grpc-js")
 var protoLoader = require("@grpc/proto-loader")
 var PROTO_PATH = __dirname + "/../protos/smarthome.proto"
-var packageDefinition = protoLoader.loadSync(PROTO_PATH, {enums: String})
+var packageDefinition = protoLoader.loadSync(PROTO_PATH, {enums: String, keepCase: true})
 var smarthome_proto = grpc.loadPackageDefinition(packageDefinition).smarthome
 
 // device dictionary
@@ -31,7 +31,7 @@ function registerDevice(call, callback) {
         // add new device to list of connected devices
         devices.set(newDevice.id, newDevice)
         callback(null, {
-            newName: newDevice.name,
+            new_name: newDevice.name,
             id: newDevice.id,
         })
     } catch(e) {
@@ -42,11 +42,10 @@ function registerDevice(call, callback) {
 }
 
 function deviceStatus(call) {
-    var id
     call.on('data', function(request) {
         console.log(request)
         try {
-            id = parseInt(request.id)
+            let id = parseInt(request.id)
             if(!isNaN(id)) {
                 var device = devices.get(id)
                 status_calls.set(call, id)
@@ -65,7 +64,7 @@ function deviceStatus(call) {
     });
 
     call.on("end", function() {
-        id = status_calls.get(call)
+        let id = status_calls.get(call)
         devices.delete(id)
         status_calls.delete(id)
         console.log("Client " + id + " closed the connection")

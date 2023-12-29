@@ -20,7 +20,7 @@ message RegisterDeviceRequest {
 }
 
 message RegisterDeviceResponse {
-    string newName = 1; // New name to distinguish between different devices of the same type
+    string new_name = 1; // New name to distinguish between different devices of the same type
     uint32 id = 2; // individual id of the client device in the smarthome
 }
 
