@@ -13,6 +13,7 @@ enum DeviceType {
     DEVICE_THERMOSTAT = 1; // Thermostat device
     DEVICE_SWITCH = 2; // Light Switch
     DEVICE_LIGHT = 3; // Smart Lights
+    DEVICE_CONTROLLER = 4; // GUI Controller
 }
 
 message RegisterRequest {

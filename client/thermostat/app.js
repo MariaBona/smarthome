@@ -17,6 +17,8 @@ var current_temp = 21.5;
 var target_temp = 19;
 var requesting_heat = false;
 var quit = false;
+// temperature update interval of 60 seconds
+const interval = 60 * 1000;
 var status_call
 
 // calling register RPC function to get my device ID from the server
@@ -106,8 +108,8 @@ client.register({name: name, type: "DEVICE_THERMOSTAT"}, function(error, respons
                         current_temp = current_temp + change;
                         writeAndUpdateStatus(target_temp, false);
                     }
-                    // wait 5 seconds
-                    await new Promise(done => setTimeout(() => done(), 5000));
+                    // wait until next update
+                    await new Promise(done => setTimeout(() => done(), interval));
                 } 
             })();
         }

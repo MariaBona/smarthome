@@ -7,5 +7,12 @@
   <body>
     <h1><%= title %></h1>
     <p>Welcome to <%= title %></p>
+    <p>Smart Lights:</p>
+    <div class="list-group">
+      <% lights.forEach((light) => { %>
+        <h4 class="list-group-item-heading"><%= light.id %></h4>
+        <p class="list-group-item-text"><%= light.type %></p>
+      <% }) %>
+    </div>
   </body>
 </html>
