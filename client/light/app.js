@@ -1,7 +1,6 @@
 var readline = require('readline')
 var grpc = require("@grpc/grpc-js")
 var protoLoader = require("@grpc/proto-loader")
-const { stat } = require('fs')
 var PROTO_PATH = __dirname + "/../../protos/smarthome.proto"
 // load proto with enums as strings and keepCase to prevent removal of underscores
 var packageDefinition = protoLoader.loadSync(PROTO_PATH, {enums: String, keepCase: true})
@@ -33,13 +32,11 @@ client.register({name: name, type: "DEVICE_LIGHT"}, function(error, response) {
 
             status_call.on("error", function(e) {
                 console.log("Error occured: " + e);
-                quit = true;
                 rl.close();
             });
 
             status_call.on("end", function() {
-                console.log("Server closed the connection");
-                quit = true;
+                console.log("Server closed the status connection");
                 rl.close();
             });
 
@@ -82,6 +79,11 @@ client.register({name: name, type: "DEVICE_LIGHT"}, function(error, response) {
             rl.on("line", function(message) {
                 if (message.toLowerCase() === "q") {
                     status_call.end();
+                    // if subsctiption is open cancel it
+                    if (sub_call) {
+                        sub_call.cancel();
+                    }
+                    // close the command line interface and exit the client
                     rl.close();
                     return;
                 }
@@ -93,25 +95,40 @@ client.register({name: name, type: "DEVICE_LIGHT"}, function(error, response) {
                         // cancel the switch subscription
                         sub_call.cancel();
                         sub_call = null;
-                        listSwitches();
-                    } else {
-                        listSwitches();
-                        return;
                     }
+                    listSwitches();
+                    return;
                 }
 
-                // if there is no subscription for a light switch select one
+                // if there is no subscription for a light switch, select it from list
                 if(!sub_call) {
                     // Get user input
                     switch_id = parseInt(message);
                     if(!isNaN(switch_id)) {
-                        // TODO: subscribe
-                        console.log("subscribe?")
+                        // subscribe to a device with selected id
+                        sub_call = sub.subscribe({id: switch_id});
+
+                        // read stream and turn on or off the light
+                        sub_call.on("data", function(sub_response) {
+                            console.log("data: ", sub_response);
+                            writeAndUpdateStatus(sub_response.status.on);
+                        });
+
+                        sub_call.on("error", function(e) {
+                            // code 1 (Cancelled) is expected, otherwise log error
+                            if (e.code != 1) {
+                                console.log("Error occured: " + e.code);
+                            }
+                        });
+            
+                        sub_call.on("end", function() {
+                            console.log("Server closed the subscription connection");
+                        });
                     } else {
                         console.log("Needs to be a valid switch id");
                     }
                 } else {
-                    console.log("'q' to Quit or 'switch' to select different switch)")
+                    console.log("'q' to Quit or 'switch' to select different switch")
                 }
             });
         }

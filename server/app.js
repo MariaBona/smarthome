@@ -68,7 +68,10 @@ function status(call) {
                     console.log(request.status)
                     device.status = request.status
                     if (subscribers.has(id)) {
-                        subscribers.get(id).write(device.status);
+                        subscribers.get(id).write({
+                            id: id,
+                            status: device.status
+                        });
                     }
                 } else {
                     console.log("device names don't match")
@@ -85,35 +88,42 @@ function status(call) {
         let id = status_calls.get(call)
         devices.delete(id)
         status_calls.delete(id)
+        if (subscribers.has(id)) {
+            subscribers.get(id).end();
+            subscribers.delete(id)
+        }
         console.log("Client " + id + " closed the connection")
         call.end()
     });
 
     call.on("error", function(e) {
-        console.log("status resulted in error: " + e);
+        console.log("status resulted in error: ", e);
     });
 }
 
 // handle publish (client streaming) calls
-function publish(call, callback) {
+function publish(call) {
     call.on("data", function(request) {
         let id = request.id;
         if (!publishers.has(call)) {
             publishers.set(call, id)
         }
-        const events = request.events;
+        const event = request.event;
         if (subscribers.has(id)) {
-            subscribers.get(id).write(events);
+            subscribers.get(id).write({
+                id: id,
+                status: event
+            });
         }
     });
 
     call.on("error", function(e) {
-        console.log("publish resulted in error: " + e);
+        console.log("publish resulted in error: ", e);
     });
 
     call.on("end", function() {
         let id = publishers.get(call)
-        publishers.delete(id)
+        publishers.delete(call)
         console.log("Publisher " + id + " closed the connection")
     });
 }
@@ -128,21 +138,23 @@ function subscribe(call, callback) {
             return [...subscribers].find(([key, value]) => val === value)[0];
         }
 
-        call.on("cancel", function() {
+        call.on("cancelled", function() {
             let id = getSubId(call);
-            console.log("Subscriber " + id + " cancelled the subscription");
+            subscribers.delete(id);
+            console.log("Subscription cancelled for " + id);
         });
 
         call.on("end" , function() {
             let id = getSubId(call);
-            console.log("Subscriber " + id + " ended the subscription call");
+            subscribers.delete(id);
+            console.log("Subscription ended for " + id);
         });
 
         call.on("error", function(e) {
-            console.log("subscribe resulted in error: " + e);
+            console.log("subscribe resulted in error: ", e);
         });
     } catch(e) {
-        callback(null, {
+        call.write({
             message: "An error occured during device registration"
         })
     }

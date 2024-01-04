@@ -54,7 +54,7 @@ client.register({name: name, type: "DEVICE_SWITCH"}, function(error, response) {
             });
 
             publish_call.on("end", function() {
-                console.log("Server closed the connection");
+                console.log("Server closed the publish connection");
                 rl.close();
             });
 
@@ -77,8 +77,8 @@ client.register({name: name, type: "DEVICE_SWITCH"}, function(error, response) {
             // update thermostat status on entry from the command line from user
             rl.on("line", function(message) {
                 if (message.toLowerCase() === "q") {
-                    status_call.end();
                     publish_call.end();
+                    status_call.end();
                     rl.close();
                     return;
                 }
@@ -90,7 +90,7 @@ client.register({name: name, type: "DEVICE_SWITCH"}, function(error, response) {
                         name: name,
                         type: "DEVICE_SWITCH",
                         event: {
-                            on: Boolean(switch_on),
+                            on: switch_on,
                         }
                     });
                 } else {
