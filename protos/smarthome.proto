@@ -2,31 +2,38 @@ syntax = "proto3";
 
 package smarthome;
 
-// Collects information about devices connected to the the system
+// Collects information about devices connected to the system
 service RegistryService {
-    rpc registerDevice(RegisterDeviceRequest) returns (RegisterDeviceResponse) {} // Register a device in the system
+    rpc register(RegisterRequest) returns (RegisterResponse) {} // Register a device in the system
 }
 
 // Device enum is used to distinguish device types
 enum DeviceType {
     DEVICE_UNKNOWN = 0; // Device type not set
     DEVICE_THERMOSTAT = 1; // Thermostat device
+    DEVICE_SWITCH = 2; // Light Switch
+    DEVICE_LIGHT = 3; // Smart Lights
 }
 
-message RegisterDeviceRequest {
+message RegisterRequest {
     string name = 1; // Requested name set to a thermostat client
     DeviceType type = 2; // what kind of device the client device is
 }
 
-message RegisterDeviceResponse {
+message RegisterResponse {
     string new_name = 1; // New name to distinguish between different devices of the same type
     uint32 id = 2; // individual id of the client device in the smarthome
+    map<uint32,DeviceType> devices = 3; // list of all devices connected to the system (id, type)
 }
 
 // Allows for device status updates and status subscriptions
 service StatusService {
-    rpc status(stream StatusRequest) returns (stream StatusResponse) {} // Stream device status to the Main Controller
-    rpc subscribe(SubscribeRequest) returns (stream SubscribeResponse) {} // Devices can subscribe to status of other devices on the system
+    rpc status(stream StatusRequest) returns (stream StatusResponse) {} // bi-directional stream device status and controller commands
+    // Client side stream events
+    rpc publish(stream PublishRequest) returns (PublishResponse) {}
+    // Server side stream other device status when subscribed.
+    // Devices can subscribe to status of other devices on the system
+    rpc subscribe(SubscribeRequest) returns (stream SubscribeResponse) {}
 }
 
 // Stream device status
@@ -40,6 +47,13 @@ message StatusRequest {
 message StatusResponse {
     map<string,string> commands = 1; // pending commands from the controller relayed to the client
 }
+
+message PublishRequest {
+    uint32 id = 1;
+    map<string,string> event = 2;
+}
+
+message PublishResponse {}
 
 message SubscribeRequest {
     uint32 id = 1; // id of the device we want to subscribe to its status updates
@@ -62,5 +76,4 @@ message SetTempRequest {
 }
 
 // Response to SetTempRequest
-message SetTempResponse {
-}
+message SetTempResponse {}

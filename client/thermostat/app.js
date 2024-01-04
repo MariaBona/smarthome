@@ -1,5 +1,4 @@
 var readline = require('readline')
-var readlineSync = require('readline-sync')
 var grpc = require("@grpc/grpc-js")
 var protoLoader = require("@grpc/proto-loader")
 const { stat } = require('fs')
@@ -20,8 +19,8 @@ var requesting_heat = false;
 var quit = false;
 var status_call
 
-// calling registerDevice RPC function to get my device ID from the server
-client.registerDevice({name: name, type: "DEVICE_THERMOSTAT"}, function(error, response) {
+// calling register RPC function to get my device ID from the server
+client.register({name: name, type: "DEVICE_THERMOSTAT"}, function(error, response) {
     try {
         console.log(error, response)
         if (response.message) {
