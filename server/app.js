@@ -4,19 +4,24 @@ var PROTO_PATH = __dirname + "/../protos/smarthome.proto"
 var packageDefinition = protoLoader.loadSync(PROTO_PATH, {enums: String, keepCase: true})
 var smarthome_proto = grpc.loadPackageDefinition(packageDefinition).smarthome
 
-// device dictionary
+// device dictionary (id: { name, id, type, status, status_call })
 const devices = new Map()
-// calls mapped to a device
+// calls mapped to a device (call: id)
 const status_calls = new Map()
-// publisher's calls
+// publisher's calls (call: id)
 const publishers = new Map()
+// current subscribers (id: call)
+const subscribers = new Map()
 // last commands from controller to devices by their id
 const commands = new Map()
+
+// use a unique id for all connecting devices
 let currentId = 0
 function nextId() {
     return currentId++;
 }
 
+// handle register (unary) calls
 function register(call, callback) {
     try {
         var name = call.request.name.toString()
@@ -42,13 +47,13 @@ function register(call, callback) {
             devices: connected_devs,
         });
     } catch(e) {
-        console.log("dupa")
         callback(null, {
             message: "An error occured during device registration"
         })
     }
 }
 
+// handle status (bi-directional streaming) calls
 function status(call) {
     call.on('data', function(request) {
         console.log(request)
@@ -62,6 +67,9 @@ function status(call) {
                 if(device.name == request.name) {
                     console.log(request.status)
                     device.status = request.status
+                    if (subscribers.has(id)) {
+                        subscribers.get(id).write(device.status);
+                    }
                 } else {
                     console.log("device names don't match")
                 }
@@ -82,10 +90,11 @@ function status(call) {
     });
 
     call.on("error", function(e) {
-        console.log(e)
+        console.log("status resulted in error: " + e);
     });
 }
 
+// handle publish (client streaming) calls
 function publish(call, callback) {
     call.on("data", function(request) {
         let id = request.id;
@@ -93,11 +102,13 @@ function publish(call, callback) {
             publishers.set(call, id)
         }
         const events = request.events;
-        // TODO: send events to subscribers
+        if (subscribers.has(id)) {
+            subscribers.get(id).write(events);
+        }
     });
 
     call.on("error", function(e) {
-        console.log(e)
+        console.log("publish resulted in error: " + e);
     });
 
     call.on("end", function() {
@@ -107,6 +118,36 @@ function publish(call, callback) {
     });
 }
 
+// handle subscribe (server streaming) calls
+function subscribe(call, callback) {
+    try {
+        let id = call.request.id;
+        subscribers.set(id, call);
+
+        function getSubId(val) {
+            return [...subscribers].find(([key, value]) => val === value)[0];
+        }
+
+        call.on("cancel", function() {
+            let id = getSubId(call);
+            console.log("Subscriber " + id + " cancelled the subscription");
+        });
+
+        call.on("end" , function() {
+            let id = getSubId(call);
+            console.log("Subscriber " + id + " ended the subscription call");
+        });
+
+        call.on("error", function(e) {
+            console.log("subscribe resulted in error: " + e);
+        });
+    } catch(e) {
+        callback(null, {
+            message: "An error occured during device registration"
+        })
+    }
+}
+
 var server = new grpc.Server()
 server.addService(smarthome_proto.RegistryService.service, {
     register: register,
@@ -114,6 +155,7 @@ server.addService(smarthome_proto.RegistryService.service, {
 server.addService(smarthome_proto.StatusService.service, {
     status: status,
     publish: publish,
+    subscribe: subscribe,
 })
 server.bindAsync("0.0.0.0:40000", grpc.ServerCredentials.createInsecure(), function() {
     server.start()
