@@ -40,7 +40,7 @@ client.register({name: name, type: "DEVICE_LIGHT"}, function(error, response) {
             });
 
             function writeAndUpdateStatus(switch_on) {
-                console.log("Light is turned ", switch_on == 1 ? "ON" : "OFF" )
+                console.log(name + " is turned ", switch_on == 1 ? "ON" : "OFF" )
                 on = switch_on
                 // update the status of the switch
                 status_call.write({

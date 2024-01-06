@@ -60,18 +60,25 @@ function register(call, callback) {
 
 // handle status (bi-directional streaming) calls
 function status(call) {
+    // this function will receive stream of StatusRequest messages that contain status of device
+    // we need to save the call object and map it to the the device id for later use
     call.on('data', function(request) {
         console.log(request)
         try {
             let id = parseInt(request.id)
             if(!isNaN(id)) {
                 var device = devices.get(id)
+                // save the call object and map it to the sender id for later
+                // so that we can send it the StatusResponse with commands from the controller
                 if (!status_calls.has(call)) {
                     status_calls.set(call, id)
                 }
+                // verify if the device name matches our device list
                 if(device.name == request.name) {
                     console.log(request.status)
                     device.status = request.status
+                    // if there are any subscribers to our device id, write status to their
+                    // respective subscribe call object
                     if (subscribers.has(id)) {
                         subscribers.get(id).write({
                             id: id,

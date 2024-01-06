@@ -17,8 +17,8 @@ var current_temp = 21.5;
 var target_temp = 19;
 var requesting_heat = false;
 var quit = false;
-// temperature update interval of 60 seconds
-const interval = 60 * 1000;
+// temperature update interval of 5 seconds
+const interval = 5 * 1000;
 var status_call
 
 // calling register RPC function to get my device ID from the server

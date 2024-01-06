@@ -5,20 +5,29 @@ var protoLoader = require("@grpc/proto-loader")
 var PROTO_PATH = __dirname + "/../../../../protos/smarthome.proto"
 // load proto with enums as strings and keepCase to prevent removal of underscores
 var packageDefinition = protoLoader.loadSync(PROTO_PATH, {enums: String, keepCase: true})
-
 var smarthome_proto = grpc.loadPackageDefinition(packageDefinition).smarthome
 
+// RegistryService used to register device on the server and get new unique name and id
 var client = new smarthome_proto.RegistryService("0.0.0.0:40000", grpc.credentials.createInsecure());
+// StatusService used to publish our status and subscribe to other devices status
 var sub = new smarthome_proto.StatusService("0.0.0.0:40000", grpc.credentials.createInsecure());
+// ControllerService that GUI Controller is using to control individuall devices
 var controller = new smarthome_proto.ControllerService("0.0.0.0:40000", grpc.credentials.createInsecure());
 
+// our device name
 var name = "Controller";
+// our device id received from the server
 var id = -1;
+// map of all devices and their statuses received from the server
 var devices
+// light devices list for use by the ejs template
 var lights = []
-var thermos = []
+// thermostat devices list for use by the ejs template
+var thermos = [] 
 var status_call
+// controller status string for use by the ejs template
 var controller_status
+// containes pending ejs router response for rendering on status update after controlling a device
 var pending_res
 
 /* Called when opening home page */
@@ -96,11 +105,17 @@ router.get('/', function(req, res, next) {
           });
 
           // subscribe to all devices
-          //for (const id of Object.keys(devices)) 
+          for (const id of Object.keys(devices)) 
           {
-            var sub_call = sub.subscribe({id: 0});
+            const type = devices[id].type;
+            // only subscribe to light and thermostat devices
+            if (type != "DEVICE_LIGHT" && type != "DEVICE_THERMOSTAT") {
+              // skip to next iteration if it's not light or thermostat
+              continue;
+            }
+            // call subscribe GRPC with SubscribeRequest
+            var sub_call = sub.subscribe({id: id});
             sub_call.on('data', function(sub_response) {
-              console.log("sub_call data: ", sub_response);
               // when subscribe returns response stream, update the device status
               let dev = devices[sub_response.id]
               dev.status = sub_response.status;

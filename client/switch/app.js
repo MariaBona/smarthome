@@ -58,13 +58,14 @@ client.register({name: name, type: "DEVICE_SWITCH"}, function(error, response) {
                 rl.close();
             });
 
+            // Get the switch input from the command line
             console.log("Switch ON: 1 or OFF: 0 (q to Quit):")
             var rl = readline.createInterface({
                 input: process.stdin,
                 output: process.stdout
             });
 
-            // update the ready status of the switch
+            // update the ready status of the switch by sending StatusResponse to the StatusService on the server
             status_call.write({
                 id: id,
                 name: name,
@@ -74,7 +75,7 @@ client.register({name: name, type: "DEVICE_SWITCH"}, function(error, response) {
                 }
             });
 
-            // update thermostat status on entry from the command line from user
+            // update thermostat status on Enter from the command line from user
             rl.on("line", function(message) {
                 if (message.toLowerCase() === "q") {
                     publish_call.end();

@@ -5,6 +5,7 @@ package smarthome;
 // Collects information about devices connected to the system
 service RegistryService {
     rpc register(RegisterRequest) returns (RegisterResponse) {} // Register a device in the system
+    rpc rename(RenameRequest) returns (RenameResponse) {} // Device can request a new name
 }
 
 // Device enum is used to distinguish device types
@@ -16,19 +17,30 @@ enum DeviceType {
     DEVICE_CONTROLLER = 4; // GUI Controller
 }
 
+// RegisterRequest to request the device to be accepted on the system
 message RegisterRequest {
     string name = 1; // Requested name set to a thermostat client
     DeviceType type = 2; // what kind of device the client device is
 }
-
+// RegisterResponse will contain device unique name and it's ID
 message RegisterResponse {
     // New name to distinguish between different devices of the same type
     string new_name = 1;
     // individual id of the client device in the smarthome
     uint32 id = 2;
     // list of all devices connected to the system and their status (id, StatusRequest)
-    // reuse the StatusRequest message for status
+    // NOTE: reuse the StatusRequest message for status
     map<uint32,StatusRequest> devices = 3; 
+}
+
+// Devices can use RenameRequest in rename GRPC call to request their name to be changed
+message RenameRequest {
+    uint32 id = 1;
+    string new_name = 2;
+}
+// RenameResponse with the new device name that was requested
+message RenameResponse {
+    string new_name = 1;
 }
 
 // Allows for device status updates and status subscriptions
@@ -53,26 +65,32 @@ message StatusResponse {
     map<string,string> commands = 1; // pending commands from the controller relayed to the client
 }
 
+// Devices use PublishRequest to notify StatusService that their status changed
+// useful for momentary buttons, light switches, etc.
 message PublishRequest {
     uint32 id = 1;
     map<string,string> event = 2;
 }
-
+// Empty PublishResponse
 message PublishResponse {}
 
+// Devices can subscribe to status updates and events from other Devices
+// for example a Samrt Light might wait for a light switch or buttom to be pressed
 message SubscribeRequest {
     uint32 id = 1; // id of the device we want to subscribe to its status updates
 }
-
+// Stream of SubscribeResponse messageg that contain status updates for subscribing devices to handle
 message SubscribeResponse {
-    uint32 id = 1;
-    map<string,string> status = 2;
+    uint32 id = 1; // id of the device that status has changed
+    map<string,string> status = 2; // new status of the device
 }
 
-// Thermostat device/service
+// Controller service for use by the GUI Controller
 service ControllerService {
-    rpc controlLight(ControlLightRequest) returns (ControlLightResponse) {} // Unary gRPC call to set light on or off
-    rpc setTemp(SetTempRequest) returns (SetTempResponse) {} // Unary gRPC service to set target temperature
+    // Unary gRPC call to set light on or off
+    rpc controlLight(ControlLightRequest) returns (ControlLightResponse) {}
+    // Unary gRPC service to set target temperature
+    rpc setTemp(SetTempRequest) returns (SetTempResponse) {}
 }
 
 // ControlLightRequest definition for GUI Controller
@@ -81,14 +99,14 @@ message ControlLightRequest {
     uint32 on = 2; // do we want to turn it on or off (1 or 0)
 }
 
-// empty response to ControlLightRequest
+// Empty response to ControlLightRequest
 message ControlLightResponse {}
 
 // Main Controller can request target temperature on a thermostat device
 message SetTempRequest {
-    uint32 id = 1;
-    double temperature = 2;
+    uint32 id = 1; // id of the thermostat
+    double temperature = 2; // new target temperature
 }
 
-// Response to SetTempRequest
+// Empty response to SetTempRequest
 message SetTempResponse {}
