@@ -90,7 +90,9 @@ function status(call) {
     });
 
     call.on("end", function() {
+        // get the device id that ended this status_call
         let id = status_calls.get(call)
+        // cleanup the devices, status_calls and subscribers arrays for this device id
         devices.delete(id)
         status_calls.delete(id)
         if (subscribers.has(id)) {
@@ -109,7 +111,10 @@ function status(call) {
 // handle publish (client streaming) calls
 function publish(call) {
     call.on("data", function(request) {
+        console.log(request);
+        // get the id of device publishing the data
         let id = request.id;
+        // map the call to id so that we know which publisher's call has 'end'ed below
         if (!publishers.has(call)) {
             publishers.set(call, id)
         }
@@ -128,7 +133,9 @@ function publish(call) {
     });
 
     call.on("end", function() {
+        // find the id of the device so we can display a correct log message
         let id = publishers.get(call)
+        // delete this call from publishers array
         publishers.delete(call)
         console.log("Publisher " + id + " closed the connection")
     });
@@ -169,6 +176,7 @@ function subscribe(call, callback) {
     }
 }
 
+// GUI can call this to controll the lights
 function controlLight(call, callback) {
     try {
         console.log(call.request);
@@ -178,6 +186,7 @@ function controlLight(call, callback) {
         function getStatusCallById(id) {
             return [...status_calls].find(([key, value]) => id === value)[0];
         }
+        // get the status_call for this light
         const status_call = getStatusCallById(id);
         // write StatusResponse message back with the 'on' value
         status_call.write({
@@ -191,7 +200,36 @@ function controlLight(call, callback) {
         callback(null, {});
     } catch(e) {
         callback(null, {
-            message: "An error occured during device registration"
+            message: "An error occured during controlLight"
+        });
+    }
+}
+
+// GUI can call this to controll the thermostat
+function setTemp(call, callback) {
+    try {
+        console.log("setTemp: ", call.request);
+        let id = call.request.id;
+        let temperature = call.request.temperature;
+        // helper function to find the light's status_call call object
+        function getStatusCallById(id) {
+            return [...status_calls].find(([key, value]) => id === value)[0];
+        }
+        // get the status_call for this thermostat
+        const status_call = getStatusCallById(id);
+        // write StatusResponse message back with the 'on' value
+        status_call.write({
+            commands: {
+                temperature: temperature
+            }
+        });
+        
+        // respond with empty message when everything is ok
+        // the light status will be updated on with the status call by the light device itself
+        callback(null, {});
+    } catch(e) {
+        callback(null, {
+            message: "An error occured during setTemp"
         });
     }
 }
@@ -206,7 +244,8 @@ server.addService(smarthome_proto.StatusService.service, {
     subscribe: subscribe,
 })
 server.addService(smarthome_proto.ControllerService.service, {
-    controlLight: controlLight
+    controlLight: controlLight,
+    setTemp: setTemp,
 })
 server.bindAsync("0.0.0.0:40000", grpc.ServerCredentials.createInsecure(), function() {
     server.start()

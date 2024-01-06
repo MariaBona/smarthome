@@ -7,6 +7,7 @@
   <body>
     <h1><%= title %></h1>
     <p>Welcome to <%= title %></p>
+    <p>Controller status is: <%= controller_status %></p>
     <div class="row">
       <div class="column">
         <p>Smart Lights:</p>
@@ -26,12 +27,12 @@
         <div class="list-group">
           <% thermos.forEach((therm) => { %>
             <div class="list-group-item">
-              <a href="/?therm_id=<%= therm.id %>&on=<%= therm.on=='ON'?0:1%>">
-                <h4 class="list-group-item-heading"><%= therm.name %></h4>
-              </a>
+              <h4 class="list-group-item-heading"><%= therm.name %></h4>
               <p class="list-group-item-text">Current: <%= therm.current_temp %></p>
               <p class="list-group-item-text">Target: <%= therm.target_temp %></p>
               <p class="list-group-item-text">Heating: <%= therm.requesting_heat %></p>
+              <a href="/?therm_id=<%= therm.id %>&temperature=<%= parseFloat(therm.target_temp)+0.5%>">UP(+)</a>
+              <a href="/?therm_id=<%= therm.id %>&temperature=<%= parseFloat(therm.target_temp)-0.5%>">DOWN(-)</a>
             </div>
           <% }) %>
         </div>

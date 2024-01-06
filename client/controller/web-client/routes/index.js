@@ -71,6 +71,7 @@ router.get('/', function(req, res, next) {
           name = response.new_name;
           id = response.id;
           devices = response.devices
+          console.log("Controller registered", devices)
           controller_status = "Controller registered: " + response.new_name + ", id: " + response.id,
 
           status_call = sub.status()
@@ -106,6 +107,8 @@ router.get('/', function(req, res, next) {
               // render the page with updated statuses
               if (pending_res) {
                 render(pending_res);
+                // set the pending_res back to null as it's no longer usable after rendering this update
+                pending_res = null
               }
             });
 
@@ -136,16 +139,36 @@ router.get('/', function(req, res, next) {
         // if we try to render here, we will not have updated the light's status ON or OFF in the GUI
         //render(res);
       });
-      //render(res);
-      //res.render('index', { title: "GRPC Smarthome", controller_status: "Controller registered: " + response.new_name + ", id: " + response.id, lights: lights })
+    } else if ('therm_id' in req.query) {
+      // query says this is a request to control the thermostat target temparature
+      let therm_id = parseInt(req.query.therm_id);
+      let temperature = parseFloat(req.query.temperature);
+      console.log(req.query, therm_id, temperature);
+      // call controlLight on the ControllerService
+      controller.setTemp({
+        id: therm_id,
+        temperature: temperature
+      }, function(error, response) {
+        console.log("Control response", error, response);
+        // save he pending res to pending_res so we can render the page when subcribe response is received
+        pending_res = res
+        // if we try to render here, we will not have updated the light's status ON or OFF in the GUI
+        //render(res);
+      });
+
     } else {
-      //res.render('index', { title: "GRPC Smarthome", controller_status: "Controller registered: " + response.new_name + ", id: " + response.id, lights: lights })
-      render(res);
+      // just render the page if controller is already registered and we don't control anything this time
+      res.render('index', {
+        title: "GRPC Smarthome",
+        controller_status: "Controller registered: " + response.new_name + ", id: " + response.id,
+        lights: lights,
+        thermos: thermos 
+      });
     }
   } catch(e) {
     console.log(e)
-    //res.render('error', {title: 'GRPC Smarthome', error: e, message: "smarthome server is not available at the moment"})
-    render(res);
+    res.render('error', {title: 'GRPC Smarthome', error: e, message: "smarthome server is not available at the moment"})
+    //render(res);
   }
 });
 

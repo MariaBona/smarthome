@@ -66,7 +66,7 @@ client.register({name: name, type: "DEVICE_THERMOSTAT"}, function(error, respons
 
             status_call.on("data", function(status_response) {
                 console.log(status_response);
-                temperature = parseFloat(status_response.temperature);
+                temperature = parseFloat(status_response.commands.temperature);
                 console.log("Target temperature from controller received:" + temperature);
                 if (!isNaN(temperature)) {
                     writeAndUpdateStatus(temperature);
