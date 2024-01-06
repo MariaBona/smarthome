@@ -10,6 +10,7 @@ var smarthome_proto = grpc.loadPackageDefinition(packageDefinition).smarthome
 
 var client = new smarthome_proto.RegistryService("0.0.0.0:40000", grpc.credentials.createInsecure());
 var sub = new smarthome_proto.StatusService("0.0.0.0:40000", grpc.credentials.createInsecure());
+var controller = new smarthome_proto.ControllerService("0.0.0.0:40000", grpc.credentials.createInsecure());
 
 var name = "Controller";
 var id = -1;
@@ -80,11 +81,19 @@ router.get('/', function(req, res, next) {
           render(res);
       });
     } else if ('light_id' in req.query) {
+      console.log('trigger light on or off')
       // query says this is a request to trigger the lights on or off
       let light_id = parseInt(req.query.light_id);
-      let on = req.query.on
+      let on = parseInt(req.query.on);
+      // call controlLight on the ControllerService
+      controller.controlLight({
+        id: light_id,
+        on: on
+      }, function(error, response) {
+        console.log(response);
+        render(res);
+      });
       //res.render('index', { title: "GRPC Smarthome", controller_status: "Controller registered: " + response.new_name + ", id: " + response.id, lights: lights })
-      render(res);
     } else {
       //res.render('index', { title: "GRPC Smarthome", controller_status: "Controller registered: " + response.new_name + ", id: " + response.id, lights: lights })
       render(res);

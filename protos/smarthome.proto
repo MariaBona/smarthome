@@ -70,9 +70,19 @@ message SubscribeResponse {
 }
 
 // Thermostat device/service
-service ThermostatService {
+service ControllerService {
+    rpc controlLight(ControlLightRequest) returns (ControlLightResponse) {} // Unary gRPC call to set light on or off
     rpc setTemp(SetTempRequest) returns (SetTempResponse) {} // Unary gRPC service to set target temperature
 }
+
+// ControlLightRequest definition for GUI Controller
+message ControlLightRequest {
+    uint32 id = 1; // id of the light we want to control
+    uint32 on = 2; // do we want to turn it on or off (1 or 0)
+}
+
+// empty response to ControlLightRequest
+message ControlLightResponse {}
 
 // Main Controller can request target temperature on a thermostat device
 message SetTempRequest {

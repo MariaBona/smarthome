@@ -55,8 +55,8 @@ client.register({name: name, type: "DEVICE_LIGHT"}, function(error, response) {
             writeAndUpdateStatus(on);
 
             status_call.on("data", function(status_response) {
-                console.log(status_response);
-                // TODO: allow turning on the light from controller
+                // update 'on' status and write StatusRequest to status_call of StatusService
+                writeAndUpdateStatus(status_response.commands.on);
             });
 
             function listSwitches() {

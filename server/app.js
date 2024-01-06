@@ -114,6 +114,7 @@ function publish(call) {
             publishers.set(call, id)
         }
         const event = request.event;
+        // write SubscribeResponse message to the subscriber's call object
         if (subscribers.has(id)) {
             subscribers.get(id).write({
                 id: id,
@@ -139,16 +140,19 @@ function subscribe(call, callback) {
         let id = call.request.id;
         subscribers.set(id, call);
 
-        function getSubId(val) {
-            return [...subscribers].find(([key, value]) => val === value)[0];
+        // helper function to find subscriber's id by it's call object
+        function getSubId(c) {
+            return [...subscribers].find(([key, value]) => c === value)[0];
         }
 
+        // remove subscriber's call object from the map when the call is cancelled
         call.on("cancelled", function() {
             let id = getSubId(call);
             subscribers.delete(id);
             console.log("Subscription cancelled for " + id);
         });
 
+        // remove subscriber's call object from the map when the call is ended
         call.on("end" , function() {
             let id = getSubId(call);
             subscribers.delete(id);
@@ -165,6 +169,33 @@ function subscribe(call, callback) {
     }
 }
 
+function controlLight(call, callback) {
+    try {
+        console.log(call.request);
+        let id = call.request.id;
+        let on = call.request.on;
+        // helper function to find the light's status_call call object
+        function getStatusCallById(id) {
+            return [...status_calls].find(([key, value]) => id === value)[0];
+        }
+        const status_call = getStatusCallById(id);
+        // write StatusResponse message back with the 'on' value
+        status_call.write({
+            commands: {
+                on: on
+            }
+        });
+        
+        // respond with empty message when everything is ok
+        // the light status will be updated on with the status call by the light device itself
+        callback(null, {});
+    } catch(e) {
+        callback(null, {
+            message: "An error occured during device registration"
+        });
+    }
+}
+
 var server = new grpc.Server()
 server.addService(smarthome_proto.RegistryService.service, {
     register: register,
@@ -173,6 +204,9 @@ server.addService(smarthome_proto.StatusService.service, {
     status: status,
     publish: publish,
     subscribe: subscribe,
+})
+server.addService(smarthome_proto.ControllerService.service, {
+    controlLight: controlLight
 })
 server.bindAsync("0.0.0.0:40000", grpc.ServerCredentials.createInsecure(), function() {
     server.start()
