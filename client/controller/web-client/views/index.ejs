@@ -23,6 +23,18 @@
       </div>
       <div class="column">
         <p>Thermostats:</p>
+        <div class="list-group">
+          <% thermos.forEach((therm) => { %>
+            <div class="list-group-item">
+              <a href="/?therm_id=<%= therm.id %>&on=<%= therm.on=='ON'?0:1%>">
+                <h4 class="list-group-item-heading"><%= therm.name %></h4>
+              </a>
+              <p class="list-group-item-text">Current: <%= therm.current_temp %></p>
+              <p class="list-group-item-text">Target: <%= therm.target_temp %></p>
+              <p class="list-group-item-text">Heating: <%= therm.requesting_heat %></p>
+            </div>
+          <% }) %>
+        </div>
       </div>
     </div>
   </body>
