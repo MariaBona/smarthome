@@ -22,9 +22,13 @@ message RegisterRequest {
 }
 
 message RegisterResponse {
-    string new_name = 1; // New name to distinguish between different devices of the same type
-    uint32 id = 2; // individual id of the client device in the smarthome
-    map<uint32,DeviceType> devices = 3; // list of all devices connected to the system (id, type)
+    // New name to distinguish between different devices of the same type
+    string new_name = 1;
+    // individual id of the client device in the smarthome
+    uint32 id = 2;
+    // list of all devices connected to the system and their status (id, StatusRequest)
+    // reuse the StatusRequest message for status
+    map<uint32,StatusRequest> devices = 3; 
 }
 
 // Allows for device status updates and status subscriptions

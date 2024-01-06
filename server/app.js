@@ -39,7 +39,12 @@ function register(call, callback) {
         devices.set(newDevice.id, newDevice)
         const connected_devs = new Object()
         for(const dev of devices.values()) {
-            connected_devs[dev.id] = dev.type;
+            connected_devs[dev.id] = {
+                id: dev.id,
+                name: dev.name,
+                type: dev.type,
+                status: dev.status
+            }
         }
         callback(null, {
             new_name: newDevice.name,

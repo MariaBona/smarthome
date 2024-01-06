@@ -20,7 +20,6 @@ var sub_call;
 // calling register RPC function to get my device ID from the server
 client.register({name: name, type: "DEVICE_LIGHT"}, function(error, response) {
     try {
-        console.log("Register?: ", error, response)
         if (response.message) {
             console.log(response.message)
         } else {
@@ -63,9 +62,9 @@ client.register({name: name, type: "DEVICE_LIGHT"}, function(error, response) {
             function listSwitches() {
                 console.log("Select a light switch ('q' to Quit, 'switch' to select different switch)")
                 for (const id of Object.keys(response.devices)) {
-                    const type = response.devices[id];
-                    if (type == "DEVICE_SWITCH") {
-                        console.log("Switch", id)
+                    const device = response.devices[id];
+                    if (device.type == "DEVICE_SWITCH") {
+                        console.log(id + ":", device.name)
                     }
                 }
             }

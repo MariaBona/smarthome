@@ -13,54 +13,86 @@ var sub = new smarthome_proto.StatusService("0.0.0.0:40000", grpc.credentials.cr
 
 var name = "Controller";
 var id = -1;
+var devices
+var lights = []
+var status_call
+var controller_status
 
 /* Called when opening home page */
 router.get('/', function(req, res, next) {
-  //res.render('index', { title: 'Express' });
+  // helper function to render the index page in full
+  function render(res) {
+    res.render('index', {
+      title: "GRPC Smarthome",
+      controller_status: controller_status,
+      lights: lights })
+  }
   try {
-    client.register({name: name, type: "DEVICE_CONTROLLER"}, function(error, response) {
-        res.render('index', {
-          title: "GRPC Smarthome",
-          error: error,
-          result: "Controller registered: " + response.new_name + ", id: " + response.id,
-        });
-        name = response.new_name;
-        id = response.id;
+    // get query keys (like: localhost:8080?light_id=1&on=0) -> [light_id, on]
+    const keys = Object.keys(req.query)
+    // Render home page and register the Controller client when there are no query items in the req    
+    if (!keys.length) {
+      // don't do anything if we already have registered
+      if (status_call) {
+        render(res);
+        return
+      }
+      client.register({name: name, type: "DEVICE_CONTROLLER"}, function(error, response) {
+          name = response.new_name;
+          id = response.id;
+          devices = response.devices
+          controller_status = "Controller registered: " + response.new_name + ", id: " + response.id,
 
-        status_call = sub.status()
-        status_call.on("error", function(e) {
-            console.log("Error occured: " + e);
-            rl.close();
-        });
+          status_call = sub.status()
+          status_call.on("error", function(e) {
+              console.log("Error occured: " + e);
+              rl.close();
+          });
 
-        status_call.on("end", function() {
-            console.log("Server closed the status connection");
-            rl.close();
-        });
+          status_call.on("end", function() {
+              console.log("Server closed the status connection");
+              rl.close();
+          });
 
-        // update the status of the controller
-        status_call.write({
-            id: id,
-            name: name,
-            type: "DEVICE_CONTROLLER",
-            status: {
-                ready: true,
+          // update the status of the controller
+          status_call.write({
+              id: id,
+              name: name,
+              type: "DEVICE_CONTROLLER",
+              status: {
+                  ready: true,
+              }
+          });
+
+          // render light devices on the index page
+          for (const id of Object.keys(devices)) {
+            const type = devices[id].type;
+            if (type == "DEVICE_LIGHT") {
+              lights.push({
+                id: id,
+                name: devices[id].name,
+                type: type,
+                on: devices[id].status.on == 1 ? 'ON' : 'OFF'
+              })
             }
-        });
-
-        const lights = []
-        // render light devices on the index page
-        for (const id of Object.keys(response.devices)) {
-          const type = response.devices[id];
-          if (type == "DEVICE_LIGHT") {
-            lights.push({ id: id, type: type})
           }
-        }
-        res.render('index', { title: "GRPC Smarthome", lights: lights })
-    });
+          //res.render('index', { title: "GRPC Smarthome", controller_status: "Controller registered: " + response.new_name + ", id: " + response.id, lights: lights })
+          render(res);
+      });
+    } else if ('light_id' in req.query) {
+      // query says this is a request to trigger the lights on or off
+      let light_id = parseInt(req.query.light_id);
+      let on = req.query.on
+      //res.render('index', { title: "GRPC Smarthome", controller_status: "Controller registered: " + response.new_name + ", id: " + response.id, lights: lights })
+      render(res);
+    } else {
+      //res.render('index', { title: "GRPC Smarthome", controller_status: "Controller registered: " + response.new_name + ", id: " + response.id, lights: lights })
+      render(res);
+    }
   } catch(e) {
     console.log(e)
-    res.render('index', {title: 'GRPC Smarthome', error: "smarthome server is not available at the moment"})
+    //res.render('error', {title: 'GRPC Smarthome', error: e, message: "smarthome server is not available at the moment"})
+    render(res);
   }
 });
 

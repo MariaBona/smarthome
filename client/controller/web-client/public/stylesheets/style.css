@@ -6,3 +6,23 @@ body {
 a {
   color: #00B7FF;
 }
+
+
+.column {
+  float: left;
+  width: 50%;
+}
+
+.row:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+.list-group-item {
+  width: 200px;
+  text-align: center;
+  border: yellow;
+  border-width: 1px;
+  border-style: solid;
+}
